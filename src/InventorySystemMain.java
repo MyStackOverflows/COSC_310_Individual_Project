@@ -158,6 +158,10 @@ public class InventorySystemMain {
         Database.saveDB("dummy_data", state.db.products);
         ui.log("Successfully backed up to the cloud.");
     }
+    public static void viewProduct() {
+        // Scraper API
+        // API Key: 379dcdccf3925e1998b27bf95c6a57ab
+    }
 
     // generalized encrypt and decrypt methods utilizing the open source library found here:
     // https://github.com/jasypt/jasypt

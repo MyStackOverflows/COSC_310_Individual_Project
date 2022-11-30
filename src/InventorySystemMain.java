@@ -162,49 +162,6 @@ public class InventorySystemMain {
         Database.saveDB("dummy_data", state.db.products);
         ui.log("Successfully backed up to the cloud.");
     }
-    
-    // scraper api code, kinda meh not a huge fan
-    public static void viewProductScraperAPI() {
-        // Scraper API: https://scraperapi.com, https://search.maven.org/artifact/com.scraperapi/sdk/1.1/jar, https://dashboard.scraperapi.com/, https://www.scraperapi.com/documentation/java/#java-RequestsAPIEndpoint
-        // com.scraperapi uses kong.unirest
-        int id = 1; //ui.getSelectedRow();
-        if (id > 0) {       // check if a row is selected
-            //ScraperApiClient client = new ScraperApiClient(apiKey);
-            //String result = client.get("https://httpbin.org/ip").result();
-            //System.out.println(result);
-            
-            try {
-                String productName = Database.getProductById(id, state.db.products).get(0).getName();
-                String apiKey = "379dcdccf3925e1998b27bf95c6a57ab";
-                String proxy = "http://scraperapi.render=true:" + apiKey + "@proxy-server.scraperapi.com";
-                URL server = new URL("https://duckduckgo.com/?q=" + productName + "&ia=images&iax=images");
-                System.out.println(server.toURI());
-                Properties systemProperties = System.getProperties();
-                systemProperties.setProperty("http.proxyHost", proxy);
-                systemProperties.setProperty("http.proxyPort", "8001");
-                HttpURLConnection httpURLConnection = (HttpURLConnection) server.openConnection();
-                httpURLConnection.connect();
-                String readLine = null;
-                int responseCode = httpURLConnection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    BufferedReader in = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
-                    StringBuffer response = new StringBuffer();
-                    while ((readLine = in.readLine()) != null)
-                        response.append(readLine);
-                    in.close();
-                    System.out.println(response.toString());
-                }
-                else
-                    throw new Exception("Error in API Call");
-            } catch (Exception ex) {
-                // print the exception to the UI's console
-                ex.printStackTrace();
-                ui.log(ex.toString());
-            }
-        }
-        else
-            ui.log("No row selected, so product image viewing failed.");
-    }
 
     // zenserp api: https://app.zenserp.com/ (50 free api requests / month)
     // json library: https://mvnrepository.com/artifact/com.googlecode.json-simple/json-simple
@@ -215,6 +172,10 @@ public class InventorySystemMain {
                 ArrayList<byte[]> bytes = new ArrayList<byte[]>();
                 String productName = Database.getProductById(id, state.db.products).get(0).getName();
 
+                // if cache dir doesn't exist, create it
+                if (!new File(".cache").exists())
+                    new File(".cache").mkdir();
+                
                 // if a product's images exist in cache, use those instead of sending a query and downloading images
                 // this is more efficient speed-wise and saves my limited 50/month API requests
                 int cacheCount = new File(".cache\\").listFiles((d, name) -> name.contains(productName)).length;
@@ -242,10 +203,6 @@ public class InventorySystemMain {
                         while ((readLine = in.readLine()) != null)
                             response.append(readLine);
                         in.close();
-
-                        // if cache dir doesn't exist, create it
-                        if (!new File(".cache").exists())
-                            new File(".cache").mkdir();
 
                         // parse out the urls from the JSON returned from the API
                         JSONObject json = (JSONObject)(new JSONParser().parse(response.toString()));

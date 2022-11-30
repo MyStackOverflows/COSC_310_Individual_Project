@@ -9,4 +9,3 @@ id,name,currentStock,sellPrice,buyPrice,shipTimeDays
 8,chair,10,279.98,28.0,18
 9,phone,4,869.99,87.0,21
 10,binder,35,13.79,1.38,16
-11,keyboard,10,10.0,10.0,10

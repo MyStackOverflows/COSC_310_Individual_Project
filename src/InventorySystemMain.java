@@ -189,7 +189,6 @@ public class InventorySystemMain {
                     }
                 }
                 else {  // send an api request and download the images for caching
-                    //don't want to connect up the API just yet, run tests with static data
                     // set up and do the API call
                     String apiKey = "aa9c8880-6f9a-11ed-b49e-393dfed7d82c";
                     URL server = new URL("https://app.zenserp.com/api/v2/search?apikey=" + apiKey + "&q=" + productName + "&tbm=isch");

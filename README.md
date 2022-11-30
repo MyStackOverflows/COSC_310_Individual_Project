@@ -19,7 +19,7 @@ This is the public repository team 5 will be using to collaborate on the project
  - **InventorySystemTest:** this class contains the 3 main tests and are described in more detail in the test documentation pdf.
  - **Database:** this class communicates with the UI and handles the backend functions of the inventory system. The class takes a csv file stored locally on the computer and accesses the data stored. With the new implementations, this class is now able to also take a dataset stored in the cloud and load it into the inventory system. The edited result can also be backed up to the cloud. The method available allows for adding products, removing products, editing products information, and searching for products via each attribute values.
 - **Inventory Analysis:** This class provides the necessary methods for analysis of the inventory. Method CheckStock pops message when stock is below 30 and an urgent message for inventory below 5. CheckDuplicates is to check for duplicate products by name and notify in order to have an efficient inventory database. Total inventory cost calculates the total selling as well as total buying cost. It can be used to calculate profits and also the inventory asset of the company.
-- **ImageUI: (added in individual project)** This is the UI window used for displaying images based on an ArrayList of byte[] objects (each one being an image) passed into the class on construction. It has buttons to cycle through images and perrforms automatiic scaling on images to make sure their aspect ratios aren't messed up or that the image gets cut off by the frame of the window or the buttons.
+- **ImageUI: (added in individual project)** This is the UI window used for displaying images based on an ArrayList of byte[] objects (each one being an image) passed into the class on construction. It has buttons to cycle through images and performs automatiic scaling on images to make sure their aspect ratios aren't messed up or that the image gets cut off by the frame of the window or the buttons.
 
 ### New features (5) implemented in A3:
  - Ability to change password for increased security (Paul)
@@ -34,6 +34,7 @@ This is the public repository team 5 will be using to collaborate on the project
 
 ### New feature(s) implemented in Individual Project:
  - Ability to view images based on product name and web-scraped google image results (new UI window added for the feature above, look for information on 'ImageUI' above)
+ - This is combined with a caching feature which makes sure only 1 API call and image download cycle is required for each product, meaning that it's only slow to show images for a product the first time for that product
  
 ### New APIs and libraries used in Individual Project:
  - [zenserp](https://zenserp.com) for querying google images and getting JSON response

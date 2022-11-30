@@ -179,7 +179,7 @@ public class InventorySystemMain {
                 
                 // if a product's images exist in cache, use those instead of sending a query and downloading images
                 // this is more efficient speed-wise and saves my limited 50/month API requests
-                int cacheCount = new File(".cache\\").listFiles((d, name) -> name.contains(productName)).length;
+                int cacheCount = new File(".cache\\").listFiles((d, name) -> name.contains(productName + "_")).length;
                 if (cacheCount > 0) {
                     for (int i = 9; i > 9 - cacheCount; i--) {
                         String path = ".cache\\" + productName + "_" + i + ".jpg";

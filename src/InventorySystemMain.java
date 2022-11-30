@@ -1,8 +1,12 @@
+import java.io.*;
+import java.net.*;
+import java.util.*;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileSystemView;
-import java.io.*;
 import org.jasypt.util.text.*;
+import org.json.simple.*;
+import org.json.simple.parser.*;
 
 public class InventorySystemMain {
     static MainUI ui;
@@ -158,9 +162,124 @@ public class InventorySystemMain {
         Database.saveDB("dummy_data", state.db.products);
         ui.log("Successfully backed up to the cloud.");
     }
+    
+    // scraper api code, kinda meh not a huge fan
+    public static void viewProductScraperAPI() {
+        // Scraper API: https://scraperapi.com, https://search.maven.org/artifact/com.scraperapi/sdk/1.1/jar, https://dashboard.scraperapi.com/, https://www.scraperapi.com/documentation/java/#java-RequestsAPIEndpoint
+        // com.scraperapi uses kong.unirest
+        int id = 1; //ui.getSelectedRow();
+        if (id > 0) {       // check if a row is selected
+            //ScraperApiClient client = new ScraperApiClient(apiKey);
+            //String result = client.get("https://httpbin.org/ip").result();
+            //System.out.println(result);
+            
+            try {
+                String productName = Database.getProductById(id, state.db.products).get(0).getName();
+                String apiKey = "379dcdccf3925e1998b27bf95c6a57ab";
+                String proxy = "http://scraperapi.render=true:" + apiKey + "@proxy-server.scraperapi.com";
+                URL server = new URL("https://duckduckgo.com/?q=" + productName + "&ia=images&iax=images");
+                System.out.println(server.toURI());
+                Properties systemProperties = System.getProperties();
+                systemProperties.setProperty("http.proxyHost", proxy);
+                systemProperties.setProperty("http.proxyPort", "8001");
+                HttpURLConnection httpURLConnection = (HttpURLConnection) server.openConnection();
+                httpURLConnection.connect();
+                String readLine = null;
+                int responseCode = httpURLConnection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    BufferedReader in = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
+                    StringBuffer response = new StringBuffer();
+                    while ((readLine = in.readLine()) != null)
+                        response.append(readLine);
+                    in.close();
+                    System.out.println(response.toString());
+                }
+                else
+                    throw new Exception("Error in API Call");
+            } catch (Exception ex) {
+                // print the exception to the UI's console
+                ex.printStackTrace();
+                ui.log(ex.toString());
+            }
+        }
+        else
+            ui.log("No row selected, so product image viewing failed.");
+    }
+
+    // zenserp api: https://app.zenserp.com/ (50 free api requests / month)
+    // json library: https://mvnrepository.com/artifact/com.googlecode.json-simple/json-simple
     public static void viewProduct() {
-        // Scraper API
-        // API Key: 379dcdccf3925e1998b27bf95c6a57ab
+        int id = ui.getSelectedRow();
+        if (id > 0) {       // check if a row is selected
+            try {
+                ArrayList<byte[]> bytes = new ArrayList<byte[]>();
+                String productName = Database.getProductById(id, state.db.products).get(0).getName();
+
+                // if a product's images exist in cache, use those instead of sending a query and downloading images
+                // this is more efficient speed-wise and saves my limited 50/month API requests
+                int cacheCount = new File(".cache\\").listFiles((d, name) -> name.contains(productName)).length;
+                if (cacheCount > 0) {
+                    for (int i = 9; i > 9 - cacheCount; i--) {
+                        String path = ".cache\\" + productName + "_" + i + ".jpg";
+                        FileInputStream stream = new FileInputStream(path);
+                        bytes.add(stream.readAllBytes());
+                        stream.close();
+                    }
+                }
+                else {  // send an api request and download the images for caching
+                    //don't want to connect up the API just yet, run tests with static data
+                    // set up and do the API call
+                    String apiKey = "aa9c8880-6f9a-11ed-b49e-393dfed7d82c";
+                    URL server = new URL("https://app.zenserp.com/api/v2/search?apikey=" + apiKey + "&q=" + productName + "&tbm=isch");
+                    HttpURLConnection httpURLConnection = (HttpURLConnection)server.openConnection();
+                    httpURLConnection.connect();
+                    String readLine = null;
+                    int responseCode = httpURLConnection.getResponseCode();
+                    if (responseCode == HttpURLConnection.HTTP_OK) {    // API call was good
+                        // read in the response data from the API
+                        BufferedReader in = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
+                        StringBuffer response = new StringBuffer();
+                        while ((readLine = in.readLine()) != null)
+                            response.append(readLine);
+                        in.close();
+
+                        // if cache dir doesn't exist, create it
+                        if (!new File(".cache").exists())
+                            new File(".cache").mkdir();
+
+                        // parse out the urls from the JSON returned from the API
+                        JSONObject json = (JSONObject)(new JSONParser().parse(response.toString()));
+                        JSONArray arr = (JSONArray)json.get("image_results");
+                        int total = arr.size() > 10 ? 10 : arr.size();
+                        for (int i = 0; i < total; i++) {     // get a maximum of 10 images
+                            JSONObject imgJson = (JSONObject)arr.get(i);
+                            String url = imgJson.get("sourceUrl").toString();
+                            if (url.endsWith(".jpg")) { // only download jpg images
+                                byte[] imgBytes = new URL(url).openStream().readAllBytes(); // get the raw image bytes
+                                // save the image
+                                FileOutputStream fileStream = new FileOutputStream(".cache\\" + productName + "_" + (total - i - 1) + ".jpg");
+                                fileStream.write(imgBytes);
+                                fileStream.close();
+
+                                // add image to bytes object
+                                bytes.add(imgBytes);
+                            }
+                            else    // we still want 10 images if possible so increase the loop counter
+                                total++;
+                        }
+                    }
+                    else    // we had an issue with the API call
+                        throw new Exception("Error in API Call");
+                }
+                new ImageUI(bytes); // show the dialogue with the images
+            } catch (Exception ex) {
+                // print the exception to the UI's console
+                ex.printStackTrace();
+                ui.log(ex.toString());
+            }
+        }
+        else
+            ui.log("No row selected, so product image viewing failed.");
     }
 
     // generalized encrypt and decrypt methods utilizing the open source library found here:

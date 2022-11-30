@@ -163,6 +163,7 @@ public class InventorySystemMain {
         ui.log("Successfully backed up to the cloud.");
     }
 
+    // method to view google images for a product based on selected row in the UI
     // zenserp api: https://app.zenserp.com/ (50 free api requests / month)
     // json library: https://mvnrepository.com/artifact/com.googlecode.json-simple/json-simple
     public static void viewProduct() {
